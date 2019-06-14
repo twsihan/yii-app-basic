@@ -1,0 +1,10 @@
+version: '3'
+services:
+  php:
+    image: yiisoftware/yii2-php:7.1-apache
+    volumes:
+      - ~/.composer/cache:/root/.composer/cache:delegated
+      - ./docker/apache/default.conf:/etc/apache2/sites-enabled/000-default.conf:delegated
+      - ./:/app:delegated
+    ports:
+      - '8000:80'

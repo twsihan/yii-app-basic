@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="yii-app-basic" default="build" basedir=".">
+    <property name="project.name" value="${ant.project.name}"/>
+
+    <record name="${basedir}/build/build.log" emacsmode="true"/>
+
+    <property name="build" value="${basedir}/build"/>
+    <property name="build.tools" value="${build}/tools"/>
+    <property name="build.logs" value="${build}/logs"/>
+    <property name="build.dist" value="${build}/dist"/>
+
+    <property name="environment" value="Development"/><!-- Production -->
+
+    <property name="package.release" value="dev"/>
+    <property name="package.name" value="${project.name}.${package.release}.tgz"/>
+    <property name="package.file" value="${build.dist}/${package.name}"/>
+
+    <target name="clean" unless="clean.done" description="Cleanup build artifacts">
+        <delete dir="${build.logs}"/>
+        <delete dir="${build.dist}"/>
+        <property name="clean.done" value="true"/>
+    </target>
+
+    <target name="prepare" unless="prepare.done" depends="clean" description="Prepare for build">
+        <mkdir dir="${build.logs}"/>
+        <mkdir dir="${build.dist}"/>
+        <property name="prepare.done" value="true"/>
+    </target>
+
+    <target name="phpcpd" depends="prepare"
+            description="Find duplicate code using PHPCPD and print human readable output. Intended for usage on the command line before committing.">
+        <exec executable="php" taskname="phpcpd">
+            <arg path="${build.tools}/phpcpd.phar"/>
+            <arg path="${basedir}"/>
+            <arg value="--exclude=vendor"/>
+        </exec>
+    </target>
+
+    <target name="phpcpd-ci" depends="prepare"
+            description="Find duplicate code using PHPCPD and log result in XML format. Intended for usage within a continuous integration environment.">
+        <exec executable="php" taskname="phpcpd">
+            <arg path="${build.tools}/phpcpd.phar"/>
+            <arg path="${basedir}"/>
+            <arg value="--log-pmd=${build.logs}/phpcpd.xml"/>
+            <arg value="--exclude=vendor"/>
+        </exec>
+    </target>
+
+    <target name="phpcs" depends="prepare"
+            description="Find coding standard violations using PHP_CodeSniffer and print result in text format">
+        <exec executable="php" taskname="phpcs">
+            <arg path="${build.tools}/phpcs.phar"/>
+            <arg path="${basedir}"/>
+            <arg value="--standard=PSR2"/>
+            <arg value="--extensions=php"/>
+            <arg value="--ignore=vendor"/>
+        </exec>
+    </target>
+
+    <target name="phpcs-ci" depends="prepare"
+            description="Find coding standard violations using PHP_CodeSniffer and log result in XML format">
+        <exec executable="php" taskname="phpcs">
+            <arg path="${build.tools}/phpcs.phar"/>
+            <arg path="${basedir}"/>
+            <arg value="--report=checkstyle"/>
+            <arg value="--report-file=${build.logs}/phpcs.xml"/>
+            <arg value="--standard=PSR2"/>
+            <arg value="--extensions=php"/>
+            <arg value="--ignore=vendor"/>
+        </exec>
+    </target>
+
+    <target name="phpdcd" depends="prepare"
+            description="Perform project mess detection using PHPMD and print result in text format">
+        <exec executable="php" taskname="phpdcd">
+            <arg path="${build.tools}/phpdcd.phar"/>
+            <arg path="${basedir}"/>
+            <arg value="--exclude=vendor"/>
+        </exec>
+    </target>
+
+    <target name="phpdcd-ci" depends="prepare"
+            description="Find duplicate code using PHPCPD and log result in XML format. Intended for usage within a continuous integration environment.">
+        <exec executable="php" taskname="phpdcd">
+            <arg path="${build.tools}/phpdcd.phar"/>
+            <arg path="${basedir}"/>
+            <arg value="--exclude=vendor"/>
+        </exec>
+    </target>
+
+    <target name="phploc" depends="prepare" description="Measure project size using PHPLOC">
+        <exec executable="php" taskname="phploc">
+            <arg path="${build.tools}/phploc.phar"/>
+            <arg path="${basedir}"/>
+            <arg value="--count-tests"/>
+            <arg value="--log-xml"/>
+            <arg path="${build.logs}/phploc.xml"/>
+        </exec>
+    </target>
+
+    <target name="phploc-ci" depends="prepare"
+            description="Measure project size using PHPLOC and log result in CSV and XML format">
+        <exec executable="php" taskname="phploc">
+            <arg path="${build.tools}/phploc.phar"/>
+            <arg path="${basedir}"/>
+            <arg value="--count-tests"/>
+            <arg value="--log-xml"/>
+            <arg path="${build.logs}/phploc.xml"/>
+        </exec>
+    </target>
+
+    <target name="phpmd" depends="prepare"
+            description="Perform project mess detection using PHPMD and print result in text format">
+        <exec executable="php" taskname="phpmd">
+            <arg path="${build.tools}/phpmd.phar"/>
+            <arg path="${basedir}"/>
+            <arg value="text"/>
+            <arg path="${basedir}/build/phpmd/phpmd.xml"/>
+            <arg value="--exclude"/>
+            <arg path="vendor"/>
+        </exec>
+    </target>
+
+    <target name="phpmd-ci" depends="prepare"
+            description="Perform project mess detection using PHPMD and log result in XML format">
+        <exec executable="php" taskname="phpmd">
+            <arg path="${build.tools}/phpmd.phar"/>
+            <arg path="${basedir}"/>
+            <arg value="xml"/>
+            <arg path="${basedir}/build/phpmd/phpmd.xml"/>
+            <arg value="--reportfile"/>
+            <arg path="${build.logs}/phpmd.xml"/>
+            <arg value="--exclude"/>
+            <arg path="vendor"/>
+        </exec>
+    </target>
+
+    <target name="generate" depends="phpcpd-ci,phpcs-ci,phpdcd-ci,phploc-ci,phpmd-ci"
+            description="Generate Currency-specific subclasses of Money and autoloader code">
+        <exec executable="php" taskname="init">
+            <arg value="${basedir}/init"/>
+            <arg value="--env=${environment}"/>
+            <arg value="--overwrite=Yes"/>
+        </exec>
+        <exec executable="php" taskname="composer">
+            <arg path="${build.tools}/composer.phar"/>
+            <arg value="install"/>
+            <arg value="--prefer-dist"/>
+            <arg value="--optimize-autoloader"/>
+        </exec>
+    </target>
+
+    <fileset id="package" dir="${basedir}">
+        <include name="assets/**"/>
+        <include name="commands/**"/>
+        <include name="config/**"/>
+        <include name="controllers/**"/>
+        <include name="docker/**"/>
+        <include name="mail/**"/>
+        <include name="models/**"/>
+        <include name="runtime/**"/>
+        <include name="vagrant/**"/>
+        <include name="vendor/**"/>
+        <include name="views/**"/>
+        <include name="web/**"/>
+        <include name="widgets/**"/>
+        <include name="docker-compose.yml"/>
+        <include name="Vagrantfile"/>
+        <include name="yii*"/>
+    </fileset>
+
+    <target name="build" depends="generate">
+        <fail unless="package.file" message="Package file not found!"/>
+        <delete file="${package.file}" failonerror="false"/>
+        <tar longfile="gnu" destfile="${package.file}" compression="gzip">
+            <fileset refid="package"/>
+        </tar>
+    </target>
+</project>
