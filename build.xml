@@ -9,7 +9,7 @@
     <property name="build.logs" value="${build}/logs"/>
     <property name="build.dist" value="${build}/dist"/>
 
-    <property name="environment" value="Development"/><!-- Production -->
+    <property name="environment" value="dev"/><!-- prod -->
 
     <property name="package.release" value="dev"/>
     <property name="package.name" value="${project.name}.${package.release}.tgz"/>

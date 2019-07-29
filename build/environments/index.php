@@ -29,7 +29,7 @@
  * ```
  */
 return [
-    'Development' => [
+    'dev' => [
         'path' => 'dev',
         'setWritable' => [
             'runtime',
@@ -44,7 +44,7 @@ return [
             'config/codeception-local.php',
         ],
     ],
-    'Production' => [
+    'prod' => [
         'path' => 'prod',
         'setWritable' => [
             'runtime',
