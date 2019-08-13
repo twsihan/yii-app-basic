@@ -11,7 +11,7 @@
 
     <property name="environment" value="dev"/><!-- prod -->
 
-    <property name="package.release" value="dev"/>
+    <property name="package.release" value="${environment}"/>
     <property name="package.name" value="${project.name}.${package.release}.tgz"/>
     <property name="package.file" value="${build.dist}/${package.name}"/>
 
